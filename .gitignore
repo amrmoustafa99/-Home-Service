@@ -54,9 +54,8 @@ app.*.map.json
 *.p12
 *.mobileprovision
 key.properties
-**/google-services.json
-**/GoogleService-Info.plist
 **/serviceAccount*.json
+*-firebase-adminsdk-*.json
 **/secrets.dart
 
 # Coverage
