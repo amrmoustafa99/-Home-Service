@@ -7,12 +7,12 @@ import 'core/constants/app_constants.dart';
 import 'core/routes/app_routes.dart';
 import 'core/theme/app_theme.dart';
 import 'firebase_options.dart';
-import 'features/auth/presentation/login_screen.dart';
+import 'features/auth/presentation/login/login_screen.dart';
 import 'features/auth/presentation/onboarding/pages/onboading_one_screen.dart';
 import 'features/auth/presentation/onboarding/pages/onboarding_two_screen.dart';
 import 'features/auth/presentation/onboarding/pages/onboarding_three_screen.dart';
 import 'features/auth/presentation/onboarding/pages/onboarding_four_screen.dart';
-import 'package:home_service/features/auth/presentation/register_screen.dart'
+import 'package:home_service/features/auth/presentation/register/register_screen.dart'
     as register_screen;
 
 Future<void> main() async {
