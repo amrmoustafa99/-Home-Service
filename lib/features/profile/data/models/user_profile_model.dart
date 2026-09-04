@@ -1,16 +1,12 @@
 import 'dart:typed_data';
 
-/// Holds the current user's profile data.
-///
-/// Fully backend-agnostic: the profile picture is kept in memory as raw image
-/// bytes ([profileImageBytes]) which works identically on Web, Android and
-/// iOS. No Firestore/Supabase imports and no [dart:io] types in this class.
 class UserProfileModel {
   const UserProfileModel({
     required this.uid,
     required this.name,
     required this.phone,
     required this.email,
+    this.profileImageUrl,
     this.profileImageBytes,
     this.isPhoneVerified = true,
     this.isEmailVerified = true,
@@ -20,18 +16,19 @@ class UserProfileModel {
   final String name;
   final String phone;
   final String email;
-
-  /// In-memory image bytes of the avatar photo — never a path/URL.
+  final String? profileImageUrl;
   final Uint8List? profileImageBytes;
-
   final bool isPhoneVerified;
   final bool isEmailVerified;
+
+  static const Object _unset = Object();
 
   UserProfileModel copyWith({
     String? name,
     String? phone,
     String? email,
-    Uint8List? profileImageBytes,
+    String? profileImageUrl,
+    Object? profileImageBytes = _unset,
     bool? isPhoneVerified,
     bool? isEmailVerified,
   }) {
@@ -40,7 +37,10 @@ class UserProfileModel {
       name: name ?? this.name,
       phone: phone ?? this.phone,
       email: email ?? this.email,
-      profileImageBytes: profileImageBytes ?? this.profileImageBytes,
+      profileImageUrl: profileImageUrl ?? this.profileImageUrl,
+      profileImageBytes: identical(profileImageBytes, _unset)
+          ? this.profileImageBytes
+          : profileImageBytes as Uint8List?,
       isPhoneVerified: isPhoneVerified ?? this.isPhoneVerified,
       isEmailVerified: isEmailVerified ?? this.isEmailVerified,
     );

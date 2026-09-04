@@ -1,30 +1,26 @@
-import 'dart:typed_data';
-
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/painting.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../data/models/profile_field.dart';
+import '../../data/models/profile_messages.dart';
 import '../../data/models/user_profile_model.dart';
+import '../../data/repositories/profile_repository.dart';
 import 'profile_state.dart';
 
-/// Manages the profile feature state entirely in memory.
-///
-/// There is NO backend in this session: the cubit is seeded with a hardcoded
-/// dummy [UserProfileModel] and "saves" are simulated with a short delay.
-/// The profile picture is stored as in-memory [Uint8List] bytes (web-safe).
 class ProfileCubit extends Cubit<ProfileState> {
-  ProfileCubit() : super(const ProfileInitial()) {
-    _profile = const UserProfileModel(
-      uid: 'dummy-user',
-      name: 'محمد حسني',
-      phone: '+20112838457',
-      email: 'muhammad34@gmail.com',
-      isPhoneVerified: true,
-      isEmailVerified: true,
-    );
-    emit(ProfileLoaded(_profile));
-  }
+  ProfileCubit({
+    required ProfileRepository repository,
+    String? Function()? currentUidProvider,
+  })  : _repository = repository,
+        _currentUid = currentUidProvider ??
+            (() => FirebaseAuth.instance.currentUser?.uid),
+        super(const ProfileInitial());
 
-  /// Source of truth for the latest known profile, mirrored into the emitted
-  /// states so the UI always has access to it.
+  final ProfileRepository _repository;
+  final String? Function() _currentUid;
+
   UserProfileModel _profile = const UserProfileModel(
     uid: '',
     name: '',
@@ -32,41 +28,110 @@ class ProfileCubit extends Cubit<ProfileState> {
     email: '',
   );
 
-  /// The latest known profile, regardless of the current state variant.
   UserProfileModel get currentProfile => _profile;
 
-  /// "Saves" the edited fields into the in-memory profile.
-  ///
-  /// Emits [ProfileUpdating] first (so the UI can show progress while keeping
-  /// existing data visible), then [ProfileLoaded] with the updated data after
-  /// a simulated network delay. Nothing is persisted.
+  Future<void> loadProfile() async {
+    final uid = _currentUid();
+    if (uid == null) {
+      debugPrint('ProfileCubit.loadProfile: no authenticated user.');
+      emit(ProfileError(
+        message: ProfileMessages.noAuthenticatedUser,
+        previousProfile: _profile,
+      ));
+      return;
+    }
+    try {
+      final data = await _repository.fetchProfileData(uid);
+      if (data == null) {
+        debugPrint(
+          'ProfileCubit.loadProfile: no document found for uid $uid.',
+        );
+        emit(ProfileError(
+          message: ProfileMessages.profileNotFound,
+          previousProfile: _profile,
+        ));
+        return;
+      }
+      _profile = UserProfileModel(
+        uid: uid,
+        name: _stringFrom(data, ProfileField.name),
+        phone: _stringFrom(data, ProfileField.phone),
+        email: _stringFrom(data, ProfileField.email),
+        profileImageUrl: _imageUrlFrom(data),
+      );
+      emit(ProfileLoaded(_profile));
+    } catch (e) {
+      debugPrint('ProfileCubit.loadProfile: $e');
+      emit(ProfileError(
+        message: ProfileMessages.loadFailed,
+        previousProfile: _profile,
+      ));
+    }
+  }
+
   Future<void> updateProfileData({
     required String name,
     required String phone,
     required String email,
+    Uint8List? profileImageBytes,
   }) async {
+    final uid = _currentUid();
+    if (uid == null) {
+      debugPrint('ProfileCubit.updateProfileData: no authenticated user.');
+      emit(ProfileError(
+        message: ProfileMessages.noAuthenticatedUser,
+        previousProfile: _profile,
+      ));
+      return;
+    }
     emit(ProfileUpdating(_profile));
-    await Future.delayed(const Duration(milliseconds: 800));
-    _profile = _profile.copyWith(name: name, phone: phone, email: email);
-    emit(ProfileLoaded(_profile));
+    try {
+      String? profileImageUrl = _profile.profileImageUrl;
+      if (profileImageBytes != null) {
+        profileImageUrl = await _repository.uploadProfilePhoto(
+          uid: uid,
+          bytes: profileImageBytes,
+        );
+      }
+      await _repository.updateProfileData(
+        uid: uid,
+        name: name,
+        phone: phone,
+        email: email,
+      );
+      imageCache.clear();
+      imageCache.clearLiveImages();
+      _profile = _profile.copyWith(
+        name: name,
+        phone: phone,
+        email: email,
+        profileImageUrl: profileImageUrl,
+        profileImageBytes: null,
+      );
+      emit(ProfileLoaded(_profile));
+    } catch (e) {
+      debugPrint('ProfileCubit.updateProfileData: $e');
+      emit(ProfileError(
+        message: ProfileMessages.saveFailed,
+        previousProfile: _profile,
+      ));
+    }
   }
 
-  /// Updates the local profile picture immediately (no delay, fully local).
   void pickLocalPhoto(Uint8List bytes) {
+    if (bytes.isEmpty || identical(bytes, _profile.profileImageBytes)) {
+      return;
+    }
     _profile = _profile.copyWith(profileImageBytes: bytes);
     emit(ProfileLoaded(_profile));
   }
 
-  /// Debug-only helper that emits a [ProfileError] for visual testing.
-  ///
-  /// This exists solely to exercise the error UI; it is NEVER called by field
-  /// validation, which is handled exclusively by inline form validators.
-  void simulateError() {
-    emit(
-      ProfileError(
-        message: 'تعذر حفظ البيانات، يُرجى المحاولة مرة أخرى.',
-        previousProfile: _profile,
-      ),
-    );
+  static String? _imageUrlFrom(Map<String, dynamic> data) {
+    final url = data[ProfileField.profileImage] as String?;
+    if (url == null || url.isEmpty) return null;
+    return url;
   }
+
+  static String _stringFrom(Map<String, dynamic> data, String field) =>
+      data[field]?.toString() ?? '';
 }

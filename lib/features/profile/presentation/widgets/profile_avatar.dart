@@ -5,27 +5,18 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 
-/// Circular profile avatar.
-///
-/// Shows the picked photo via [Image.memory] when [imageBytes] is provided
-/// (web-safe, no [dart:io]), otherwise a light-grey circle with a generic
-/// person icon. When [onCameraTap] is provided, a small green camera button
-/// overlaps the avatar's bottom-right edge.
 class ProfileAvatar extends StatelessWidget {
   const ProfileAvatar({
     super.key,
+    this.imageUrl,
     this.imageBytes,
     this.size = AppDimensions.avatarSizeSm,
     this.onCameraTap,
   });
 
-  /// Raw avatar image bytes; falls back to the placeholder icon when null.
+  final String? imageUrl;
   final Uint8List? imageBytes;
-
-  /// Diameter of the circular avatar.
   final double size;
-
-  /// When non-null, renders the camera badge and calls this on tap.
   final VoidCallback? onCameraTap;
 
   @override
@@ -39,16 +30,19 @@ class ProfileAvatar extends StatelessWidget {
           clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: imageBytes == null ? AppColors.avatarBackground : null,
+            color: imageBytes == null && _urlIsEmpty
+                ? AppColors.avatarBackground
+                : null,
             border: Border.all(color: AppColors.border),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x1A000000),
+                blurRadius: AppDimensions.elevationSm,
+                offset: Offset(0, 1),
+              ),
+            ],
           ),
-          child: imageBytes != null
-              ? Image.memory(imageBytes!, fit: BoxFit.cover)
-              : Icon(
-                  Icons.person,
-                  size: size * 0.5,
-                  color: AppColors.textSecondary,
-                ),
+          child: _buildImage(),
         ),
         if (onCameraTap != null)
           Positioned(
@@ -61,7 +55,7 @@ class ProfileAvatar extends StatelessWidget {
                 height: AppDimensions.cameraBadgeSize,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppColors.primary,
+                  color: AppColors.figmaDarkGreen,
                   border: Border.all(color: AppColors.surface, width: 2),
                 ),
                 child: const Icon(
@@ -73,6 +67,30 @@ class ProfileAvatar extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+
+  bool get _urlIsEmpty => imageUrl == null || imageUrl!.isEmpty;
+
+  Widget _buildImage() {
+    if (imageBytes != null) {
+      return Image.memory(imageBytes!, fit: BoxFit.cover);
+    }
+    if (!_urlIsEmpty) {
+      return Image.network(
+        imageUrl!,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => _placeholder(),
+      );
+    }
+    return _placeholder();
+  }
+
+  Widget _placeholder() {
+    return Icon(
+      Icons.person,
+      size: size * 0.5,
+      color: AppColors.textSecondary,
     );
   }
 }

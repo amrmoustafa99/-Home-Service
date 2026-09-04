@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Central color palette for the application (green-and-white theme).
-///
-/// All screens must reuse these constants instead of declaring raw colors.
 class AppColors {
   AppColors._();
 
@@ -22,4 +19,9 @@ class AppColors {
   static const Color avatarBackground = Color(0xFFE5E9E7);
 
   static const Color error = Color(0xFFDC2626);
+
+  static const Color figmaDarkGreen = Color(0xFF146E58);
+  static const Color figmaLabelGrey = Color(0xFF525252);
+  static const Color figmaVerifiedGreen = Color(0xFF23754E);
+  static const Color figmaBoxBorder = Color(0xFF34E1B5);
 }

@@ -6,23 +6,16 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
+import '../../data/models/profile_edit_copy.dart';
 import '../../logic/cubit/profile_cubit.dart';
 import '../../logic/cubit/profile_state.dart';
+import '../widgets/primary_action_bar.dart';
+import '../widgets/profile_app_bar.dart';
 import '../widgets/profile_avatar.dart';
+import '../widgets/profile_field_style.dart';
 import '../widgets/profile_text_field.dart';
 import '../widgets/verified_badge.dart';
 
-/// Edit screen for the user's profile.
-///
-/// Form + client-side validation + in-memory save flow only: no backend runs
-/// in this session. Photo picking goes through image_picker's [XFile] /
-/// `readAsBytes()` and the bytes are stored in the Cubit state, which works
-/// identically on Web, Android and iOS.
-///
-/// NOTE: the project does not configure a global RTL locale yet, so this
-/// screen wraps itself in [Directionality.wrap] with [TextDirection.rtl].
-/// Once the app sets Up `Locale('ar')` globally, this local wrapper should be
-/// removed.
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
 
@@ -36,8 +29,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late final TextEditingController _phoneController;
   late final TextEditingController _emailController;
 
-  /// Guards the success SnackBar/pop so it only reacts to a completed save,
-  /// never to the [ProfileLoaded] re-emitted by a local photo pick.
   bool _pendingSave = false;
 
   @override
@@ -61,16 +52,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     FocusManager.instance.primaryFocus?.unfocus();
     if (!(_formKey.currentState?.validate() ?? false)) return;
     _pendingSave = true;
-    context.read<ProfileCubit>().updateProfileData(
-          name: _nameController.text.trim(),
-          phone: _phoneController.text.trim(),
-          email: _emailController.text.trim(),
-        );
-  }
-
-  /// Debug-only: triggers the global [ProfileError] state for visual testing.
-  void _simulateError() {
-    context.read<ProfileCubit>().simulateError();
+    final cubit = context.read<ProfileCubit>();
+    cubit.updateProfileData(
+      name: _nameController.text.trim(),
+      phone: _phoneController.text.trim(),
+      email: _emailController.text.trim(),
+      profileImageBytes: cubit.currentProfile.profileImageBytes,
+    );
   }
 
   Future<void> _pickPhoto() async {
@@ -116,7 +104,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         listener: (context, state) {
           if (state is ProfileLoaded && _pendingSave) {
             _pendingSave = false;
-            _showSnackBar('تم حفظ التغييرات بنجاح', isError: false);
+            _showSnackBar(ProfileEditCopy.savedSuccessfully, isError: false);
             Navigator.of(context).pop();
           } else if (state is ProfileError) {
             _pendingSave = false;
@@ -124,117 +112,114 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           }
         },
         child: Scaffold(
-          appBar: AppBar(
-            backgroundColor: AppColors.surface,
-            foregroundColor: AppColors.textPrimary,
-            elevation: 0,
-            centerTitle: true,
-            title: const Text(
-              'البيانات الشخصية',
-              style: TextStyle(fontWeight: FontWeight.w700),
-            ),
-            // TODO(team-b): replace with the real app logo asset when available.
-            actions: [
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppDimensions.spacingLg,
-                ),
-                child: Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius:
-                        BorderRadius.circular(AppDimensions.radiusSm),
-                  ),
-                  child: const Icon(
-                    Icons.home_work_outlined,
-                    color: Colors.white,
-                    size: 18,
-                  ),
-                ),
-              ),
-            ],
-          ),
+          resizeToAvoidBottomInset: true,
+          backgroundColor: ProfileFieldStyle.background,
           body: SafeArea(
             child: Column(
               children: [
+                const ProfileHeader(title: ProfileEditCopy.screenTitle),
                 Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppDimensions.spacingXl,
-                      vertical: AppDimensions.spacingLg,
-                    ),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _AvatarSection(onCameraTap: _pickPhoto),
-                          const SizedBox(height: AppDimensions.spacing2xl),
-                          ProfileTextField(
-                            label: 'الإسم بالكامل',
-                            controller: _nameController,
-                            validator: _Validators.name,
-                            textInputAction: TextInputAction.next,
-                            suffixIcon: const Icon(
-                              Icons.person_outline,
-                              color: AppColors.textSecondary,
-                            ),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        maxWidth: AppDimensions.maxContentWidth,
+                      ),
+                      child: SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppDimensions.spacingXl,
+                          vertical: AppDimensions.spacingLg,
+                        ),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _AvatarSection(onCameraTap: _pickPhoto),
+                              const SizedBox(height: 16),
+                              ProfileTextField(
+                                label: ProfileEditCopy.fullNameLabel,
+                                controller: _nameController,
+                                validator: _Validators.name,
+                                textInputAction: TextInputAction.next,
+                                prefixIcon: const Icon(
+                                  Icons.person_outline,
+                                  color: ProfileFieldStyle.iconColor,
+                                  size: ProfileFieldStyle.iconSize,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              // In RTL, prefixIcon sits right (start), suffixIcon left (end).
+                              ProfileTextField(
+                                label: ProfileEditCopy.phoneLabel,
+                                controller: _phoneController,
+                                validator: _Validators.phone,
+                                keyboardType: TextInputType.phone,
+                                textInputAction: TextInputAction.next,
+                                prefixIcon: const Icon(
+                                  Icons.phone_outlined,
+                                  color: ProfileFieldStyle.iconColor,
+                                  size: ProfileFieldStyle.iconSize,
+                                ),
+                                suffixIcon: const Padding(
+                                  padding: EdgeInsets.all(6),
+                                  child: SolidCheckCircle(),
+                                ),
+                              ),
+                              const Padding(
+                                padding: EdgeInsets.only(
+                                  top: AppDimensions.verifiedGap,
+                                  right: AppDimensions.spacingXs,
+                                ),
+                                child:
+                                    VerifiedBadge(text: ProfileEditCopy.phoneVerified),
+                              ),
+                              const SizedBox(height: 12),
+                              ProfileTextField(
+                                label: ProfileEditCopy.emailLabel,
+                                controller: _emailController,
+                                validator: _Validators.email,
+                                keyboardType: TextInputType.emailAddress,
+                                textInputAction: TextInputAction.done,
+                                prefixIcon: const Icon(
+                                  Icons.mail_outline,
+                                  color: ProfileFieldStyle.iconColor,
+                                  size: ProfileFieldStyle.iconSize,
+                                ),
+                                suffixIcon: const Padding(
+                                  padding: EdgeInsets.all(6),
+                                  child: SolidCheckCircle(),
+                                ),
+                              ),
+                              const Padding(
+                                padding: EdgeInsets.only(
+                                  top: AppDimensions.verifiedGap,
+                                  right: AppDimensions.spacingXs,
+                                ),
+                                child:
+                                    VerifiedBadge(text: ProfileEditCopy.emailVerified),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: AppDimensions.spacingXl),
-                          ProfileTextField(
-                            label: 'رقم الهاتف',
-                            controller: _phoneController,
-                            validator: _Validators.phone,
-                            keyboardType: TextInputType.phone,
-                            textInputAction: TextInputAction.next,
-                            prefixIcon: const Icon(
-                              Icons.phone_outlined,
-                              color: AppColors.textSecondary,
-                            ),
-                            suffixIcon: const _VerifiedCircleIcon(),
-                          ),
-                          const Padding(
-                            padding: EdgeInsets.only(
-                              top: AppDimensions.spacingXs,
-                              right: AppDimensions.spacingXs,
-                            ),
-                            child: VerifiedBadge(text: 'رقم الهاتف موثق'),
-                          ),
-                          const SizedBox(height: AppDimensions.spacingXl),
-                          ProfileTextField(
-                            label: 'البريد الإلكتروني',
-                            controller: _emailController,
-                            validator: _Validators.email,
-                            keyboardType: TextInputType.emailAddress,
-                            textInputAction: TextInputAction.done,
-                            prefixIcon: const Icon(
-                              Icons.mail_outline,
-                              color: AppColors.textSecondary,
-                            ),
-                            suffixIcon: const _VerifiedCircleIcon(),
-                          ),
-                          const Padding(
-                            padding: EdgeInsets.only(
-                              top: AppDimensions.spacingXs,
-                              right: AppDimensions.spacingXs,
-                            ),
-                            child:
-                                VerifiedBadge(text: 'البريد الإلكتروني موثق'),
-                          ),
-                          const SizedBox(height: AppDimensions.spacingXl),
-                        ],
+                        ),
                       ),
                     ),
                   ),
                 ),
-                _BottomBar(
-                  onSave: _save,
-                  onSimulateError: _simulateError,
-                ),
               ],
             ),
+          ),
+          bottomNavigationBar: BlocBuilder<ProfileCubit, ProfileState>(
+            buildWhen: (previous, current) =>
+                previous is! ProfileUpdating || current is! ProfileUpdating,
+            builder: (context, state) {
+              return PrimaryActionBar(
+                label: ProfileEditCopy.save,
+                icon: Icons.save_rounded,
+                onPressed: _save,
+                isBusy: state is ProfileUpdating,
+              );
+            },
           ),
         ),
       ),
@@ -242,8 +227,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 }
 
-/// Centered avatar with an overlapping camera button and a "تغيير الصورة"
-/// action below it.
 class _AvatarSection extends StatelessWidget {
   const _AvatarSection({required this.onCameraTap});
 
@@ -256,18 +239,21 @@ class _AvatarSection extends StatelessWidget {
       child: Column(
         children: [
           BlocBuilder<ProfileCubit, ProfileState>(
-            buildWhen: (previous, current) => current is ProfileLoaded,
+            buildWhen: (previous, current) =>
+                current is ProfileLoaded ||
+                current is ProfileUpdating ||
+                current is ProfileError,
             builder: (context, state) {
-              final bytes = switch (state) {
-                ProfileLoaded(:final profile) => profile.profileImageBytes,
-                ProfileUpdating(:final profile) => profile.profileImageBytes,
-                ProfileError(:final previousProfile) =>
-                  previousProfile.profileImageBytes,
+              final profile = switch (state) {
+                ProfileLoaded(:final profile) => profile,
+                ProfileUpdating(:final profile) => profile,
+                ProfileError(:final previousProfile) => previousProfile,
                 ProfileInitial() => null,
               };
               return ProfileAvatar(
-                imageBytes: bytes,
-                size: AppDimensions.avatarSizeLg,
+                imageUrl: profile?.profileImageUrl,
+                imageBytes: profile?.profileImageBytes,
+                size: AppDimensions.avatarSize,
                 onCameraTap: onCameraTap,
               );
             },
@@ -276,9 +262,9 @@ class _AvatarSection extends StatelessWidget {
           TextButton(
             onPressed: onCameraTap,
             child: const Text(
-              'تغيير الصورة',
+              ProfileEditCopy.changePhoto,
               style: TextStyle(
-                color: AppColors.primary,
+                color: AppColors.figmaDarkGreen,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -289,119 +275,10 @@ class _AvatarSection extends StatelessWidget {
   }
 }
 
-/// Green checkmark circle used as a field suffix (phone & email are verified).
-class _VerifiedCircleIcon extends StatelessWidget {
-  const _VerifiedCircleIcon();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Icon(Icons.check_circle, color: AppColors.primary);
-  }
-}
-
-/// Pinned bottom bar with the full-width save button and the debug-only
-/// "Simulate Error" trigger.
-class _BottomBar extends StatelessWidget {
-  const _BottomBar({required this.onSave, required this.onSimulateError});
-
-  final VoidCallback onSave;
-  final VoidCallback onSimulateError;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(
-        AppDimensions.spacingXl,
-        AppDimensions.spacingMd,
-        AppDimensions.spacingXl,
-        AppDimensions.spacingLg,
-      ),
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        border: Border(top: BorderSide(color: AppColors.border)),
-      ),
-      child: BlocBuilder<ProfileCubit, ProfileState>(
-        buildWhen: (previous, current) =>
-            previous is! ProfileUpdating || current is! ProfileUpdating,
-        builder: (context, state) {
-          final isUpdating = state is ProfileUpdating;
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: isUpdating ? null : onSave,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryDark,
-                    foregroundColor: Colors.white,
-                    disabledBackgroundColor: AppColors.primaryLight,
-                    minimumSize: const Size(
-                      double.infinity,
-                      AppDimensions.fieldHeight,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(AppDimensions.radiusMd),
-                    ),
-                  ),
-                  child: isUpdating
-                      ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Text(
-                          'حفظ التغييرات',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                ),
-              ),
-              // TODO(team-b): debug helper — remove before release.
-              TextButton(
-                onPressed: onSimulateError,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Icon(
-                      Icons.error_outline,
-                      size: 16,
-                      color: AppColors.error,
-                    ),
-                    SizedBox(width: AppDimensions.spacingXs),
-                    Text(
-                      'Simulate Error',
-                      style: TextStyle(
-                        color: AppColors.error,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-}
-
-/// Client-side validators used by the edit form fields.
-///
-/// These are presentation-layer rules (inline field validation); a validation
-/// failure must never reach the Cubit / [ProfileError]. Only the debug
-/// `simulateError()` route produces that state.
 abstract final class _Validators {
   static String? name(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return 'يرجى إدخال الإسم بالكامل';
+      return ProfileEditCopy.fullNameMissing;
     }
     return null;
   }
@@ -409,22 +286,21 @@ abstract final class _Validators {
   static String? email(String? value) {
     final emailPattern = RegExp(r'^[\w.+-]+@[\w-]+\.[\w.-]+$');
     if (value == null || value.trim().isEmpty) {
-      return 'يرجى إدخال البريد الإلكتروني';
+      return ProfileEditCopy.emailMissing;
     }
     if (!emailPattern.hasMatch(value.trim())) {
-      return 'يرجى إدخال بريد إلكتروني صحيح';
+      return ProfileEditCopy.emailInvalid;
     }
     return null;
   }
 
   static String? phone(String? value) {
-    // Digits only, optionally prefixed with '+', 7 to 15 digits total.
     final phonePattern = RegExp(r'^\+?\d{7,15}$');
     if (value == null || value.trim().isEmpty) {
-      return 'يرجى إدخال رقم الهاتف';
+      return ProfileEditCopy.phoneMissing;
     }
     if (!phonePattern.hasMatch(value.trim())) {
-      return 'يرجى إدخال رقم هاتف صحيح';
+      return ProfileEditCopy.phoneInvalid;
     }
     return null;
   }

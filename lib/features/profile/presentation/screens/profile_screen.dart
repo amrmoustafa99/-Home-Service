@@ -4,195 +4,237 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
+import '../../data/models/profile_copy.dart';
 import '../../data/models/user_profile_model.dart';
 import '../../logic/cubit/profile_cubit.dart';
 import '../../logic/cubit/profile_state.dart';
+import '../widgets/info_card_tile.dart';
+import '../widgets/primary_action_bar.dart';
+import '../widgets/profile_app_bar.dart';
 import '../widgets/profile_avatar.dart';
+import '../widgets/profile_field_style.dart';
 import '../widgets/verified_badge.dart';
 
-/// Read-only view of the current user's profile.
-///
-/// NOTE: the project does not configure a global RTL locale yet, so this
-/// screen wraps itself in [Directionality.wrap] with [TextDirection.rtl].
-/// Once the app sets Up `Locale('ar')` globally, this local wrapper should be
-/// removed.
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  @override
+  void initState() {
+    super.initState();
+    context.read<ProfileCubit>().loadProfile();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: AppColors.surface,
-          foregroundColor: AppColors.textPrimary,
-          elevation: 0,
-          centerTitle: true,
-          title: const Text(
-            'الملف الشخصي',
-            style: TextStyle(fontWeight: FontWeight.w700),
-          ),
-          actions: [
-            Padding(
-              padding: const EdgeInsets.only(left: AppDimensions.spacingLg),
-              child: TextButton(
-                onPressed: () {
-                  Navigator.of(context).pushNamed(AppRoutes.profileEdit);
-                },
-                style: TextButton.styleFrom(
-                  backgroundColor: AppColors.primaryContainer,
-                  foregroundColor: AppColors.primary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.spacingMd,
-                    vertical: AppDimensions.spacingSm,
-                  ),
-                  minimumSize: const Size(0, 40),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.edit_outlined, size: 18),
-                    SizedBox(width: AppDimensions.spacingXs),
-                    Text(
-                      'تعديل',
-                      style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                  ],
+        resizeToAvoidBottomInset: true,
+        backgroundColor: ProfileFieldStyle.background,
+        body: SafeArea(
+          child: Column(
+            children: [
+              const ProfileHeader(title: ProfileCopy.screenTitle),
+              Expanded(
+                child: BlocBuilder<ProfileCubit, ProfileState>(
+                  builder: (context, state) {
+                    return switch (state) {
+                      ProfileInitial() => const _ProfileLoading(),
+                      ProfileLoaded(:final profile) =>
+                        _ProfileContent(profile: profile),
+                      ProfileUpdating(:final profile) =>
+                        _ProfileContent(profile: profile),
+                      ProfileError(:final message) => _ProfileErrorView(
+                          message: message,
+                          onRetry: () =>
+                              context.read<ProfileCubit>().loadProfile(),
+                        ),
+                    };
+                  },
                 ),
               ),
-            ),
-          ],
-        ),
-        body: SafeArea(
-          child: BlocBuilder<ProfileCubit, ProfileState>(
-            builder: (context, state) {
-              final UserProfileModel? profile = switch (state) {
-                ProfileLoaded(:final profile) => profile,
-                ProfileUpdating(:final profile) => profile,
-                ProfileError(:final previousProfile) => previousProfile,
-                ProfileInitial() => null,
-              };
-              if (profile == null) {
-                return const SizedBox.shrink();
-              }
-              return _ProfileContent(profile: profile);
-            },
+            ],
           ),
+        ),
+        bottomNavigationBar: PrimaryActionBar(
+          label: ProfileCopy.editData,
+          icon: Icons.edit_rounded,
+          onPressed: () {
+            Navigator.of(context).pushNamed(AppRoutes.profileEdit);
+          },
         ),
       ),
     );
   }
 }
 
-/// Scrollable body of the read-only profile screen.
-class _ProfileContent extends StatelessWidget {
+class _ProfileLoading extends StatelessWidget {
+  const _ProfileLoading();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: CircularProgressIndicator(color: AppColors.figmaDarkGreen),
+    );
+  }
+}
+
+class _ProfileErrorView extends StatelessWidget {
+  const _ProfileErrorView({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppDimensions.spacingXl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.error_outline,
+              color: AppColors.error,
+              size: 48,
+            ),
+            const SizedBox(height: AppDimensions.spacingLg),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 16,
+              ),
+            ),
+            const SizedBox(height: AppDimensions.spacingXl),
+            ElevatedButton(
+              onPressed: onRetry,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryDark,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                ),
+              ),
+              child: const Text(ProfileCopy.retry),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProfileContent extends StatefulWidget {
   const _ProfileContent({required this.profile});
 
   final UserProfileModel profile;
 
   @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppDimensions.spacingXl),
-      child: Column(
-        children: [
-          const SizedBox(height: AppDimensions.spacingSm),
-          ProfileAvatar(
-            imageBytes: profile.profileImageBytes,
-            size: AppDimensions.avatarSizeLg,
-          ),
-          const SizedBox(height: AppDimensions.spacing2xl),
-          Text(
-            profile.name,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: AppDimensions.spacingXl),
-          _ProfileInfoTile(
-            label: 'الإسم بالكامل',
-            value: profile.name,
-          ),
-          const SizedBox(height: AppDimensions.spacingXl),
-          _ProfileInfoTile(
-            label: 'رقم الهاتف',
-            value: profile.phone,
-            badge: profile.isPhoneVerified
-                ? const VerifiedBadge(text: 'رقم الهاتف موثق')
-                : null,
-          ),
-          const SizedBox(height: AppDimensions.spacingXl),
-          _ProfileInfoTile(
-            label: 'البريد الإلكتروني',
-            value: profile.email,
-            badge: profile.isEmailVerified
-                ? const VerifiedBadge(text: 'البريد الإلكتروني موثق')
-                : null,
-          ),
-        ],
-      ),
-    );
-  }
+  State<_ProfileContent> createState() => _ProfileContentState();
 }
 
-/// A single read-only label/value card with an optional verified badge below
-/// the value (mirroring the verified rows' placement on the edit screen).
-class _ProfileInfoTile extends StatelessWidget {
-  const _ProfileInfoTile({
-    required this.label,
-    required this.value,
-    this.badge,
-  });
+class _ProfileContentState extends State<_ProfileContent>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _fadeIn;
 
-  final String label;
-  final String value;
-  final Widget? badge;
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 250),
+    );
+    _fadeIn = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.spacingLg,
-        vertical: AppDimensions.spacingLg,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 13,
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          maxWidth: AppDimensions.maxContentWidth,
+        ),
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(
+            AppDimensions.spacingXl,
+            AppDimensions.spacingLg,
+            AppDimensions.spacingXl,
+            AppDimensions.spacingLg,
+          ),
+          child: FadeTransition(
+            opacity: _fadeIn,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Column(
+                  children: [
+                    ProfileAvatar(
+                      imageUrl: widget.profile.profileImageUrl,
+                      imageBytes: widget.profile.profileImageBytes,
+                      size: AppDimensions.avatarSize,
+                    ),
+                    const SizedBox(height: AppDimensions.spacingMd),
+                    Text(
+                      widget.profile.name,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppDimensions.spacing2xl),
+                Column(
+                  children: [
+                    InfoCardTile(
+                      label: ProfileCopy.fullNameLabel,
+                      value: widget.profile.name,
+                      mainIcon: Icons.person_outline,
+                    ),
+                    const SizedBox(height: AppDimensions.spacingXl),
+                    InfoCardTile(
+                      label: ProfileCopy.phoneLabel,
+                      value: widget.profile.phone,
+                      mainIcon: Icons.phone_outlined,
+                      showCheck: true,
+                      badge: widget.profile.isPhoneVerified
+                          ? const VerifiedBadge(text: ProfileCopy.phoneVerified)
+                          : null,
+                    ),
+                    const SizedBox(height: AppDimensions.spacingXl),
+                    InfoCardTile(
+                      label: ProfileCopy.emailLabel,
+                      value: widget.profile.email,
+                      mainIcon: Icons.mail_outline,
+                      showCheck: true,
+                      badge: widget.profile.isEmailVerified
+                          ? const VerifiedBadge(text: ProfileCopy.emailVerified)
+                          : null,
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: AppDimensions.spacingXs),
-          Text(
-            value,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          if (badge != null)
-            Padding(
-              padding: const EdgeInsets.only(top: AppDimensions.spacingXs),
-              child: badge,
-            ),
-        ],
+        ),
       ),
     );
   }

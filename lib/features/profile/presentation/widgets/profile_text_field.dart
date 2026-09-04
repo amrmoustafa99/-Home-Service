@@ -1,13 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
+import 'profile_field_style.dart';
 
-/// Rounded outlined text field used in the profile forms.
-///
-/// Keeps the input decoration and validator wiring consistent across all
-/// profile fields. The [label] is shown above the field; an optional
-/// [suffixIcon] renders at the field's end (left side in RTL).
 class ProfileTextField extends StatelessWidget {
   const ProfileTextField({
     super.key,
@@ -19,25 +14,18 @@ class ProfileTextField extends StatelessWidget {
     this.keyboardType,
     this.textInputAction,
     this.hintText,
+    this.verticalContentPadding = 16,
   });
 
-  /// Label displayed above the field.
   final String label;
-
   final TextEditingController controller;
-
-  /// Inline validation callback (client-side validation only).
   final String? Function(String?)? validator;
-
-  /// Icon rendered at the start of the field (right side in RTL).
   final Widget? prefixIcon;
-
-  /// Icon rendered at the end of the field (left side in RTL).
   final Widget? suffixIcon;
-
   final TextInputType? keyboardType;
   final TextInputAction? textInputAction;
   final String? hintText;
+  final double verticalContentPadding;
 
   @override
   Widget build(BuildContext context) {
@@ -46,11 +34,7 @@ class ProfileTextField extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(
-            color: AppColors.textSecondary,
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-          ),
+          style: ProfileFieldStyle.labelStyle,
         ),
         const SizedBox(height: AppDimensions.spacingSm),
         TextFormField(
@@ -58,35 +42,28 @@ class ProfileTextField extends StatelessWidget {
           validator: validator,
           keyboardType: keyboardType,
           textInputAction: textInputAction,
+          textAlign: TextAlign.right,
+          style: ProfileFieldStyle.valueTextStyle,
           decoration: InputDecoration(
             hintText: hintText,
-            filled: true,
-            fillColor: AppColors.surface,
+            filled: false,
+            isDense: true,
             prefixIcon: prefixIcon,
             suffixIcon: suffixIcon,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: AppDimensions.spacingLg,
-              vertical: AppDimensions.spacingLg,
+            suffixIconConstraints: const BoxConstraints(
+              minWidth: 32,
+              minHeight: 32,
+              maxWidth: 32,
+              maxHeight: 32,
             ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-              borderSide: const BorderSide(color: AppColors.border),
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: verticalContentPadding,
             ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-              borderSide: const BorderSide(
-                color: AppColors.primary,
-                width: 1.5,
-              ),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-              borderSide: const BorderSide(color: AppColors.error),
-            ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-              borderSide: const BorderSide(color: AppColors.error, width: 1.5),
-            ),
+            enabledBorder: ProfileFieldStyle.enabledBorder(),
+            focusedBorder: ProfileFieldStyle.focusedBorder(),
+            errorBorder: ProfileFieldStyle.errorBorder(),
+            focusedErrorBorder: ProfileFieldStyle.focusedErrorBorder(),
           ),
         ),
       ],
