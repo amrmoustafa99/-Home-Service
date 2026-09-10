@@ -9,4 +9,8 @@ class ProfileCopy {
   static const String emailVerified = 'البريد الإلكتروني موثق';
   static const String editData = 'تعديل البيانات';
   static const String retry = 'إعادة المحاولة';
+  static const String securityPrivacy = 'الأمان والخصوصية';
+  static const String aboutApp = 'عن التطبيق';
+  static const String inviteFriend = 'دعوة الأصدقاء';
+  static const String addresses = 'العناوين';
 }

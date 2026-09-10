@@ -231,8 +231,84 @@ class _ProfileContentState extends State<_ProfileContent>
                     ),
                   ],
                 ),
+                const SizedBox(height: AppDimensions.spacing2xl),
+                _SettingsTile(
+                  icon: Icons.location_on_outlined,
+                  label: ProfileCopy.addresses,
+                  onTap: () => Navigator.of(context)
+                      .pushNamed(AppRoutes.addresses),
+                ),
+                const SizedBox(height: AppDimensions.spacingLg),
+                _SettingsTile(
+                  icon: Icons.shield_outlined,
+                  label: ProfileCopy.securityPrivacy,
+                  onTap: () => Navigator.of(context)
+                      .pushNamed(AppRoutes.securityPrivacy),
+                ),
+                const SizedBox(height: AppDimensions.spacingLg),
+                _SettingsTile(
+                  icon: Icons.info_outline,
+                  label: ProfileCopy.aboutApp,
+                  onTap: () => Navigator.of(context)
+                      .pushNamed(AppRoutes.aboutApp),
+                ),
+                const SizedBox(height: AppDimensions.spacingLg),
+                _SettingsTile(
+                  icon: Icons.person_add_alt_outlined,
+                  label: ProfileCopy.inviteFriend,
+                  onTap: () => Navigator.of(context)
+                      .pushNamed(AppRoutes.inviteFriend),
+                ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SettingsTile extends StatelessWidget {
+  const _SettingsTile({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(ProfileFieldStyle.borderRadius),
+      child: Container(
+        height: ProfileFieldStyle.fieldHeight,
+        padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingLg),
+        decoration: ProfileFieldStyle.boxDecoration(),
+        child: Directionality(
+          textDirection: TextDirection.rtl,
+          child: Row(
+            children: [
+              Icon(icon,
+                  color: ProfileFieldStyle.iconColor,
+                  size: ProfileFieldStyle.iconSize),
+              const SizedBox(width: AppDimensions.spacingMd),
+              Expanded(
+                child: Text(
+                  label,
+                  textAlign: TextAlign.right,
+                  style: ProfileFieldStyle.valueTextStyle,
+                ),
+              ),
+              const Icon(
+                Icons.chevron_left,
+                color: AppColors.textSecondary,
+                size: ProfileFieldStyle.iconSize,
+              ),
+            ],
           ),
         ),
       ),
