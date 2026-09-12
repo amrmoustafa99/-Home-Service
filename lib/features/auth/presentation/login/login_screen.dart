@@ -66,7 +66,7 @@ class _LoginScreenState extends State<LoginScreen> {
             );
 
             // بعدين لما نحدد صفحة الـ Home:
-            Navigator.pushReplacementNamed(context, '/_FoundationHome');
+            Navigator.pushReplacementNamed(context, '/HomeScreen');
           }
 
           if (state is LoginFailure) {
