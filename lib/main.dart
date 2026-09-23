@@ -22,6 +22,7 @@ import 'features/auth/presentation/onboarding/pages/onboarding_three_screen.dart
 import 'features/auth/presentation/onboarding/pages/onboarding_two_screen.dart';
 import 'features/auth/presentation/register/register_screen.dart'
     as register_screen;
+import 'features/offers/presentation/screens/offers_screen.dart';
 import 'features/profile/data/repositories/profile_repository.dart';
 import 'features/profile/logic/cubit/profile_cubit.dart';
 import 'features/profile/presentation/screens/edit_profile_screen.dart';
@@ -81,6 +82,7 @@ class HomeServiceApp extends StatelessWidget {
         AppRoutes.aboutApp: (_) => const AboutAppScreen(),
         AppRoutes.inviteFriend: (_) => const InviteFriendScreen(),
         AppRoutes.addresses: (_) => const AddressesScreen(),
+        AppRoutes.offers: (_) => const OffersScreen(),
       },
     );
   }

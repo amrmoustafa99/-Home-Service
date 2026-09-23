@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
+import '../../../offers/data/models/offers_copy.dart';
 import '../../data/models/profile_copy.dart';
 import '../../data/models/user_profile_model.dart';
 import '../../logic/cubit/profile_cubit.dart';
@@ -45,15 +46,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   builder: (context, state) {
                     return switch (state) {
                       ProfileInitial() => const _ProfileLoading(),
-                      ProfileLoaded(:final profile) =>
-                        _ProfileContent(profile: profile),
-                      ProfileUpdating(:final profile) =>
-                        _ProfileContent(profile: profile),
+                      ProfileLoaded(:final profile) => _ProfileContent(
+                        profile: profile,
+                      ),
+                      ProfileUpdating(:final profile) => _ProfileContent(
+                        profile: profile,
+                      ),
                       ProfileError(:final message) => _ProfileErrorView(
-                          message: message,
-                          onRetry: () =>
-                              context.read<ProfileCubit>().loadProfile(),
-                        ),
+                        message: message,
+                        onRetry: () =>
+                            context.read<ProfileCubit>().loadProfile(),
+                      ),
                     };
                   },
                 ),
@@ -98,11 +101,7 @@ class _ProfileErrorView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              Icons.error_outline,
-              color: AppColors.error,
-              size: 48,
-            ),
+            const Icon(Icons.error_outline, color: AppColors.error, size: 48),
             const SizedBox(height: AppDimensions.spacingLg),
             Text(
               message,
@@ -235,29 +234,56 @@ class _ProfileContentState extends State<_ProfileContent>
                 _SettingsTile(
                   icon: Icons.location_on_outlined,
                   label: ProfileCopy.addresses,
-                  onTap: () => Navigator.of(context)
-                      .pushNamed(AppRoutes.addresses),
+                  onTap: () =>
+                      Navigator.of(context).pushNamed(AppRoutes.addresses),
                 ),
                 const SizedBox(height: AppDimensions.spacingLg),
                 _SettingsTile(
                   icon: Icons.shield_outlined,
                   label: ProfileCopy.securityPrivacy,
-                  onTap: () => Navigator.of(context)
-                      .pushNamed(AppRoutes.securityPrivacy),
-                ),
-                const SizedBox(height: AppDimensions.spacingLg),
-                _SettingsTile(
-                  icon: Icons.info_outline,
-                  label: ProfileCopy.aboutApp,
-                  onTap: () => Navigator.of(context)
-                      .pushNamed(AppRoutes.aboutApp),
+                  onTap: () => Navigator.of(
+                    context,
+                  ).pushNamed(AppRoutes.securityPrivacy),
                 ),
                 const SizedBox(height: AppDimensions.spacingLg),
                 _SettingsTile(
                   icon: Icons.person_add_alt_outlined,
                   label: ProfileCopy.inviteFriend,
-                  onTap: () => Navigator.of(context)
-                      .pushNamed(AppRoutes.inviteFriend),
+                  onTap: () =>
+                      Navigator.of(context).pushNamed(AppRoutes.inviteFriend),
+                ),
+                const SizedBox(height: AppDimensions.spacingLg),
+                _SettingsTile(
+                  icon: Icons.local_offer_outlined,
+                  label: OffersCopy.listTileLabel,
+                  badge: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.error,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text(
+                      OffersCopy.badgeNew,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontFamily: 'IBMPlexSansArabic',
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  onTap: () =>
+                      Navigator.of(context).pushNamed(AppRoutes.offers),
+                ),
+                const SizedBox(height: AppDimensions.spacingLg),
+                _SettingsTile(
+                  icon: Icons.info_outline,
+                  label: ProfileCopy.aboutApp,
+                  onTap: () =>
+                      Navigator.of(context).pushNamed(AppRoutes.aboutApp),
                 ),
               ],
             ),
@@ -273,11 +299,13 @@ class _SettingsTile extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.onTap,
+    this.badge,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onTap;
+  final Widget? badge;
 
   @override
   Widget build(BuildContext context) {
@@ -286,23 +314,30 @@ class _SettingsTile extends StatelessWidget {
       borderRadius: BorderRadius.circular(ProfileFieldStyle.borderRadius),
       child: Container(
         height: ProfileFieldStyle.fieldHeight,
-        padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingLg),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimensions.spacingLg,
+        ),
         decoration: ProfileFieldStyle.boxDecoration(),
         child: Directionality(
           textDirection: TextDirection.rtl,
           child: Row(
             children: [
-              Icon(icon,
-                  color: ProfileFieldStyle.iconColor,
-                  size: ProfileFieldStyle.iconSize),
-              const SizedBox(width: AppDimensions.spacingMd),
-              Expanded(
-                child: Text(
-                  label,
-                  textAlign: TextAlign.right,
-                  style: ProfileFieldStyle.valueTextStyle,
-                ),
+              Icon(
+                icon,
+                color: ProfileFieldStyle.iconColor,
+                size: ProfileFieldStyle.iconSize,
               ),
+              const SizedBox(width: AppDimensions.spacingMd),
+              Text(
+                label,
+                textAlign: TextAlign.right,
+                style: ProfileFieldStyle.valueTextStyle,
+              ),
+              if (badge != null) ...[
+                const SizedBox(width: AppDimensions.spacingSm),
+                badge!,
+              ],
+              const Spacer(),
               const Icon(
                 Icons.chevron_left,
                 color: AppColors.textSecondary,

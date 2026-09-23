@@ -14,5 +14,6 @@ class AppRoutes {
   static const String aboutApp = '/profile/about-app';
   static const String inviteFriend = '/profile/invite-friend';
   static const String addresses = '/profile/addresses';
-
+  static const String offers = '/offers';
 }
+
