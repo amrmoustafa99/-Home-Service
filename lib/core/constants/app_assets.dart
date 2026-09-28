@@ -4,4 +4,5 @@ class AppAssets {
   static const String onboarding2 = 'assets/images/onboarding-screen-2-illustration 1.png';
   static const String onboarding3 = 'assets/images/onboarding-screen-3 1.png';
   static const String onboarding4 = 'assets/images/onboardingfour.png';
+  static const String providerIntro = 'assets/images/provider.png';
 }

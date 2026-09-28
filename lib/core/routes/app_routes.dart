@@ -8,6 +8,8 @@ class AppRoutes {
   static const String onboardingTwo = '/onboarding-two';
   static const String onboardingThree = '/onboarding-three';
   static const String onboardingFour = '/onboarding-four';
+  static const String introScreen = '/IntroScreen';
+  static const String experience = '/experience';
 
 
 }

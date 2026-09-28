@@ -1,0 +1,14 @@
+ lib/core/constants/app_assets.dart                 |   1 [32m+[m
+ lib/core/routes/app_routes.dart                    |   1 [32m+[m
+ .../auth/presentation/login/login_screen.dart      |  12 [32m+[m[31m-[m
+ .../presentation/register/register_screen.dart     |   8 [32m+[m[31m-[m
+ .../auth/presentation/widgets/field_label.dart     |   2 [32m+[m[31m-[m
+ lib/main.dart                                      |   4 [32m+[m[31m-[m
+ linux/flutter/generated_plugin_registrant.cc       |   4 [32m+[m
+ linux/flutter/generated_plugins.cmake              |   1 [32m+[m
+ macos/Flutter/GeneratedPluginRegistrant.swift      |   2 [32m+[m
+ pubspec.lock                                       | 124 [32m++++++++++++++++++++[m[31m-[m
+ pubspec.yaml                                       |   1 [32m+[m
+ windows/flutter/generated_plugin_registrant.cc     |   3 [32m+[m
+ windows/flutter/generated_plugins.cmake            |   1 [32m+[m
+ 13 files changed, 150 insertions(+), 14 deletions(-)

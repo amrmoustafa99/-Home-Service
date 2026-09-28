@@ -118,7 +118,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     const Gap(30),
 
                     // ---------------- EMAIL ----------------
-                    FieldLabel(label: 'البريد الإلكتروني', required: true),
+                    FieldLabel( 'البريد الإلكتروني', required: true, label: '',),
                     const Gap(8),
                     AuthTextField(
                       // label: 'البريد الإلكتروني',
@@ -145,7 +145,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     const Gap(16),
 
                     // ---------------- PASSWORD ----------------
-                    FieldLabel(label: 'كلمة المرور', required: true),
+                    FieldLabel( 'كلمة المرور', required: true, label: '',),
                     const Gap(8),
                     AuthTextField(
                       controller: _passwordController,
@@ -259,10 +259,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     ProviderRegisterButton(
                       text: 'التسجيل كمقدم خدمة',
                       onPressed: () {
-                        // Navigator.pushNamed(
-                        //   context,
-                        //   '/provider-register',
-                        // );
+                        Navigator.pushNamed(
+                          context,
+                          '/IntroScreen',
+                        );
                       },
                     ),
 

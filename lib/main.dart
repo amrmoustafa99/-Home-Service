@@ -2,7 +2,10 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:home_service/features/auth/data/auth_repository.dart';
+import 'package:home_service/features/auth/data/provider/join_data.dart';
 import 'package:home_service/features/auth/logic/auth/auth_cubit.dart';
+import 'package:home_service/features/auth/presentation/provider/pages/provider_experience_screen.dart';
+import 'package:home_service/features/auth/presentation/provider/pages/provider_intro_screen.dart';
 import 'core/constants/app_constants.dart';
 import 'core/routes/app_routes.dart';
 import 'core/theme/app_theme.dart';
@@ -36,10 +39,14 @@ class HomeServiceApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: AppConstants.appName,
       theme: AppTheme.light,
-      initialRoute: AppRoutes.onboardingOne,
+      initialRoute: AppRoutes.login,
     
       routes: {
         AppRoutes.home: (_) => const _FoundationHome(),
+        AppRoutes.experience: (_) => ExperienceScreen(
+              data: JoinData(),
+            ),
+        AppRoutes.introScreen: (_) => const IntroScreen(),
         // AppRoutes.register: (_) => const RegisterScreen(),
         AppRoutes.register: (_) => register_screen.RegisterScreen(),
         AppRoutes.login: (_) => const LoginScreen(),

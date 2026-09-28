@@ -102,7 +102,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       const Gap(30),
 
                       // ---------------- FULL NAME ----------------
-                      FieldLabel(label: 'الإسم بالكامل', required: true),
+                      FieldLabel( 'الإسم بالكامل', required: true, label: '',),
 
                       const Gap(8),
 
@@ -123,7 +123,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       const Gap(16),
 
                       // ---------------- PHONE ----------------
-                      FieldLabel(label: 'رقم الهاتف', required: true),
+                      FieldLabel( 'رقم الهاتف', required: true, label: '',),
 
                       const Gap(8),
 
@@ -144,7 +144,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       const Gap(16),
 
                       // ---------------- EMAIL ----------------
-                      FieldLabel(label: 'البريد الإلكتروني', required: true),
+                      FieldLabel( 'البريد الإلكتروني', required: true, label: '',),
 
                       const Gap(8),
 
@@ -173,7 +173,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       const Gap(16),
 
                       // ---------------- PASSWORD ----------------
-                      FieldLabel(label: 'كلمة المرور', required: true),
+                      FieldLabel( 'كلمة المرور', required: true, label: '',),
 
                       const Gap(8),
 
